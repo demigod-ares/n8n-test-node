@@ -1,0 +1,204 @@
+{
+	"name": "Shree_workflow",
+	"nodes": [
+		{
+			"parameters": {
+				"method": "POST",
+				"url": "={{ $json[\"host\"] }}/api/{{ $json[\"version\"] }}/auth/token",
+				"sendBody": true,
+				"specifyBody": "json",
+				"jsonBody": "={\n\"clientId\": \"{{ $json[\"App_Id_Client_Id\"] }}\",\n\"secret\":  \"{{ $json[\"App_Id_Secret\"] }}\"\n}",
+				"options": {}
+			},
+			"id": "d3b6e8ec-00ff-43f5-9e81-c1e202acd621",
+			"name": "Get service token",
+			"type": "n8n-nodes-base.httpRequest",
+			"typeVersion": 3,
+			"position": [
+				440,
+				740
+			]
+		},
+		{
+			"parameters": {
+				"method": "POST",
+				"url": "={{ $json[\"host\"] }}/api/{{ $json[\"version\"] }}/businessparties",
+				"sendHeaders": true,
+				"headerParameters": {
+					"parameters": [
+						{
+							"name": "Authorization",
+							"value": "=Bearer {{ $json.access_token }}"
+						}
+					]
+				},
+				"sendBody": true,
+				"specifyBody": "json",
+				"jsonBody": "={\n    \"userType\":  \"USER\",\n    \"email\":   \"golukamble1234@gmail.com\",\n    \"password\":  \"Any@12345678901\",\n    \"countryOfResidence\":  \"NLD\",\n    \"dateOfIncorporation\":  \"2019-04-28T10:29:50+00:00\",\n    \"identification\":  \"{{ $json.Business_Party_Identification_One }}\",\n    \"industry\":  \"Code and stuff\",\n    \"naceCode\":  \"M.6.77.888.9999\",\n    \"name\":  \"{{ $json.Business_Party_Name_One }}\",\n    \"onboarded\":  true,\n    \"postalAddress\":  {\n        \"addressIdentifierExternal\":  \"NLD_Groningen\",\n        \"buildingNumber\":  \"12-14\",\n        \"country\":  \"NLD\",\n        \"countrySubDivision\":  \"Groningen\",\n        \"postCode\":  \"9711HG\",\n        \"streetName\":  \"Gedempte Zuiderdiep\",\n        \"townName\":  \"Groningen\"\n    },\n    \"vinturasJoinDate\":  \"2019-04-28T10:29:50+00:00\",\n    \"vinturasParticipationExpiryDate\":  \"2020-04-28T10:29:50+00:00\"\n}",
+				"options": {}
+			},
+			"id": "2160dd31-7f59-4af7-954b-a29b44408911",
+			"name": "Register the first Valid BusinessParty with Onboarded 'True'",
+			"type": "n8n-nodes-base.httpRequest",
+			"typeVersion": 3,
+			"position": [
+				960,
+				480
+			]
+		},
+		{
+			"parameters": {
+				"jsCode": "const randomString = generateRandomString(6);\nconst businessParty = `Business_Party_${randomString}`\nreturn {\n  \"Business_Party_Name_One\" : businessParty,\n  \"Business_Party_Identification_One\" : generateRandomString(34)\n};\n\nfunction generateRandomString(length) {\n  let vin = \"\";\n  const possible = \"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789\";\n  for (var i = 0; i < length; i++)\n    vin += possible.charAt(Math.floor(Math.random() * possible.length));\n  return vin;\n}"
+			},
+			"id": "7ff4a146-d27a-44c6-9fed-4cba702bd548",
+			"name": "BusinessParty1",
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 1,
+			"position": [
+				460,
+				460
+			]
+		},
+		{
+			"parameters": {
+				"mode": "combine",
+				"combinationMode": "mergeByPosition",
+				"options": {}
+			},
+			"id": "bc826be5-35a4-4a09-8e40-aeeadfcb3761",
+			"name": "Merge",
+			"type": "n8n-nodes-base.merge",
+			"typeVersion": 2,
+			"position": [
+				580,
+				580
+			]
+		},
+		{
+			"parameters": {
+				"mode": "combine",
+				"combinationMode": "mergeByPosition",
+				"options": {}
+			},
+			"id": "513bd02b-a080-4908-b1a1-bdfb11cf4cb2",
+			"name": "Merge1",
+			"type": "n8n-nodes-base.merge",
+			"typeVersion": 2,
+			"position": [
+				760,
+				480
+			]
+		},
+		{
+			"parameters": {
+				"httpMethod": "POST",
+				"path": "thisIsMyPath",
+				"options": {}
+			},
+			"id": "3008cddc-1a1f-4cb5-9dfb-5d11985f55b2",
+			"name": "Webhook",
+			"type": "n8n-nodes-base.webhook",
+			"typeVersion": 1,
+			"position": [
+				40,
+				740
+			],
+			"webhookId": "1afda524-90c3-4393-9953-c0a84fa610eb"
+		},
+		{
+			"parameters": {
+				"jsCode": "// Loop over input items and add a new field\n// called 'myNewField' to the JSON of each one\nconst input = $input.first().json;\n\nreturn input.body;"
+			},
+			"id": "5220f118-868a-4c16-889b-0fba899f178b",
+			"name": "Code",
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 1,
+			"position": [
+				240,
+				740
+			]
+		}
+	],
+	"pinData": {},
+	"connections": {
+		"Get service token": {
+			"main": [
+				[
+					{
+						"node": "Merge",
+						"type": "main",
+						"index": 1
+					}
+				]
+			]
+		},
+		"BusinessParty1": {
+			"main": [
+				[
+					{
+						"node": "Merge1",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Merge": {
+			"main": [
+				[
+					{
+						"node": "Merge1",
+						"type": "main",
+						"index": 1
+					}
+				]
+			]
+		},
+		"Merge1": {
+			"main": [
+				[
+					{
+						"node": "Register the first Valid BusinessParty with Onboarded 'True'",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Webhook": {
+			"main": [
+				[
+					{
+						"node": "Code",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Code": {
+			"main": [
+				[
+					{
+						"node": "Get service token",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "Merge",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		}
+	},
+	"active": false,
+	"settings": {},
+	"versionId": "8387c013-e701-4d02-944f-cf42eb7cd0e4",
+	"id": 1,
+	"meta": {
+		"instanceId": "53b0d0d061afa3ee72f49f4b77a7b2ef0327538694f163a24d7a45d1142a5869"
+	},
+	"tags": []
+}
